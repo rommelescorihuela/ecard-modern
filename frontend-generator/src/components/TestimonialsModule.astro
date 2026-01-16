@@ -1,0 +1,51 @@
+---
+interface Testimonial {
+    name: string;
+    role?: string;
+    content: string;
+    avatar?: string;
+    text: string;
+    image?: string;
+}
+
+interface Props {
+    title: string;
+    data: Testimonial[];
+}
+
+const { title, data } = Astro.props;
+---
+
+<section class="py-8 px-6">
+  <div class="flex items-center justify-between mb-8 animate-fade-in-up">
+    <h2 class="text-2xl font-bold font-[var(--font-heading)]">{title}</h2>
+    <div class="h-1 flex-1 bg-gradient-to-r from-[var(--color-accent)] to-transparent ml-6 opacity-30 rounded-full"></div>
+  </div>
+
+  <div class="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-4 -mx-6 px-6 scrollbar-hide">
+    {data.map((item, index) => (
+      <div class={`snap-center shrink-0 w-[85%] sm:w-[300px] glass-panel p-6 rounded-2xl relative animate-fade-in-up delay-${(index + 1) * 100}`}>
+        <div class="absolute top-4 right-4 text-[var(--color-primary)] opacity-20 text-4xl font-serif">"</div>
+        <p class="text-[var(--color-text)] text-sm leading-relaxed mb-6 relative z-10 italic opacity-90">
+             {item.text}
+        </p>
+        
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-secondary)] p-[2px]">
+             {item.image ? (
+                 <img src={item.image} alt={item.name} class="w-full h-full rounded-full object-cover border-2 border-[var(--color-background)]" />
+             ) : (
+                 <div class="w-full h-full rounded-full bg-[var(--color-surface)] flex items-center justify-center text-xs font-bold text-white">
+                    {item.name.charAt(0)}
+                 </div>
+             )}
+          </div>
+          <div>
+            <h4 class="text-sm font-bold text-[var(--color-text)]">{item.name}</h4>
+            <p class="text-xs text-[var(--color-primary)] font-medium">{item.role}</p>
+          </div>
+        </div>
+    </div>
+    ))}
+  </div>
+</section>

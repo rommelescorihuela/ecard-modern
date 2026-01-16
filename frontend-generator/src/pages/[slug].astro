@@ -1,0 +1,128 @@
+---
+import TenantLayout from '../layouts/TenantLayout.astro';
+import PortfolioModule from '../components/PortfolioModule.astro';
+import TestimonialsModule from '../components/TestimonialsModule.astro';
+import ContactModule from '../components/ContactModule.astro';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+
+export async function getStaticPaths() {
+    const dataDir = path.resolve('../storage/app/private/astro-data');
+    console.log('DEBUG: CWD:', process.cwd());
+    
+    try {
+        await fs.access(dataDir);
+    } catch (e) {
+        return [];
+    }
+
+    const files = await fs.readdir(dataDir);
+    const jsonFiles = files.filter(file => file.endsWith('.json'));
+
+    const paths = await Promise.all(jsonFiles.map(async (file) => {
+        const content = await fs.readFile(path.join(dataDir, file), 'utf-8');
+        const data = JSON.parse(content);
+        return {
+            params: { slug: data.slug },
+            props: { data },
+        };
+    }));
+
+    if (process.env.BUILD_TENANT_SLUG) {
+        return paths.filter(p => p.params.slug === process.env.BUILD_TENANT_SLUG);
+    }
+
+    return paths;
+}
+
+const { data } = Astro.props;
+const { meta, theme, modules } = data;
+---
+
+<TenantLayout title={meta.title} description={meta.description} image={meta.image} theme={theme}>
+    <!-- Hero Section -->
+    <section class="py-24 px-6 text-center relative z-20">
+        <div class="animate-fade-in-up">
+            <div class="w-24 h-24 mx-auto rounded-full bg-gradient-to-tr from-[var(--color-primary)] to-[var(--color-secondary)] p-1 mb-6 shadow-lg animate-float">
+                <div class="w-full h-full rounded-full bg-[var(--color-background)] flex items-center justify-center overflow-hidden">
+                    {meta.image ? (
+                        <img src={meta.image} alt={meta.title} class="w-full h-full object-cover" />
+                    ) : (
+                        <span class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-tr from-[var(--color-primary)] to-[var(--color-secondary)]">
+                            {meta.title.charAt(0)}
+                        </span>
+                    )}
+                </div>
+            </div>
+            
+            <h1 class="text-6xl font-bold mb-3 tracking-tight text-gradient font-[var(--font-heading)]">
+                {meta.title}
+            </h1>
+            
+            <div class="inline-block px-4 py-1.5 rounded-full border border-[var(--glass-border)] bg-[var(--color-surface)] backdrop-blur-sm mb-6">
+                <p class="text-sm font-medium tracking-wide text-[var(--color-text)] uppercase opacity-90">
+                    {meta.description}
+                </p>
+            </div>
+
+            <div class="flex justify-center gap-4 animate-fade-in-up delay-200">
+                <button class="px-6 py-3 rounded-xl bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-secondary)] text-white font-bold shadow-lg hover:shadow-[0_0_20px_rgba(59,130,246,0.5)] transition-all transform hover:scale-105 active:scale-95">
+                    Save Contact
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Modules Dynamic Rendering -->
+    <div class="space-y-0">
+        {modules.map((module) => (
+            <div class="module-wrapper">
+                {module.type === 'services' && (
+                    <section class="py-8 px-6">
+                        <div class="flex items-center justify-between mb-8 animate-fade-in-up">
+                            <h2 class="text-2xl font-bold font-[var(--font-heading)]">{module.title}</h2>
+                            <div class="h-1 flex-1 bg-gradient-to-r from-[var(--color-primary)] to-transparent ml-6 opacity-30 rounded-full"></div>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 gap-4">
+                            {module.data.map((service, index) => (
+                                <div class={`glass-panel p-5 rounded-2xl hover:border-[var(--color-primary)] transition-all duration-300 group hover:-translate-y-1 animate-fade-in-up delay-${index * 100 + 100}`}>
+                                    <div class="flex justify-between items-start mb-3">
+                                        <h3 class="text-lg font-bold text-[var(--color-text)] group-hover:text-[var(--color-primary)] transition-colors">
+                                            {service.title}
+                                        </h3>
+                                        <span class="px-3 py-1 rounded-full bg-[var(--color-primary)] bg-opacity-20 text-[var(--color-primary)] text-sm font-bold border border-[var(--color-primary)] border-opacity-30">
+                                            {typeof service.price === 'number' ? `$${service.price}` : service.price}
+                                        </span>
+                                    </div>
+                                    <p class="text-sm text-[var(--color-text-muted)] leading-relaxed">
+                                        {service.description}
+                                    </p>
+                                </div>
+                            ))}
+                        </div>
+                    </section>
+                )}
+
+                {module.type === 'portfolio' && (
+                    <PortfolioModule title={module.title} data={module.data} />
+                )}
+
+                {module.type === 'testimonials' && (
+                    <TestimonialsModule title={module.title} data={module.data} />
+                )}
+
+                {module.type === 'contact' && (
+                    <ContactModule title={module.title} data={module.data} />
+                )}
+                
+                {/* Fallback */}
+                {!['services', 'portfolio', 'testimonials', 'contact'].includes(module.type) && (
+                    <div class="bg-gray-100 p-8 rounded text-center my-8 container mx-auto">
+                        <p class="text-gray-500">Module type "{module.type}" implementation pending.</p>
+                    </div>
+                )}
+            </div>
+        ))}
+    </div>
+</TenantLayout>

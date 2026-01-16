@@ -8,11 +8,13 @@ namespace App\Models;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Spatie\Permission\Traits\HasRoles;
 
 /**
  * Class User
- * 
+ *
  * @property int $id
  * @property string $name
  * @property string $email
@@ -22,14 +24,16 @@ use Illuminate\Database\Eloquent\Model;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property int|null $plan_id
- * 
+ *
  * @property Plan|null $plan
  * @property Collection|Vcard[] $vcards
  *
  * @package App\Models
  */
-class User extends Model
+class User extends Authenticatable
 {
+	use HasFactory, HasRoles;
+
 	protected $table = 'users';
 
 	protected $casts = [

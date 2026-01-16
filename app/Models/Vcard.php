@@ -33,12 +33,12 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Vcard extends Model
 {
-	protected $table = 'vcards';
-
 	protected $casts = [
 		'user_id' => 'int',
 		'is_active' => 'bool',
-		'template_id' => 'int'
+		'template_id' => 'int',
+		'content' => 'json',
+		'last_built_at' => 'datetime'
 	];
 
 	protected $fillable = [
@@ -47,7 +47,8 @@ class Vcard extends Model
 		'template_identifier',
 		'content',
 		'is_active',
-		'template_id'
+		'template_id',
+		'last_built_at'
 	];
 
 	public function user()

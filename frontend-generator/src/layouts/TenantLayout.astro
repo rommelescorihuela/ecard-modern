@@ -1,0 +1,60 @@
+---
+import '../styles/global.css';
+
+interface Props {
+	title: string;
+    description?: string;
+    image?: string;
+    theme?: {
+        primary?: string;
+        secondary?: string;
+        background?: string;
+        text?: string;
+        headingFont?: string;
+        bodyFont?: string;
+    }
+}
+
+const { title, description = "Digital Card", image, theme } = Astro.props;
+
+// Construct dynamic style string if theme props are provided
+const themeStyles = theme ? `
+    :root {
+        ${theme.primary ? `--color-primary: ${theme.primary};` : ''}
+        ${theme.secondary ? `--color-secondary: ${theme.secondary};` : ''}
+        ${theme.background ? `--color-background: ${theme.background};` : ''}
+        ${theme.text ? `--color-text: ${theme.text};` : ''}
+        ${theme.headingFont ? `--font-heading: ${theme.headingFont};` : ''}
+        ${theme.bodyFont ? `--font-body: ${theme.bodyFont};` : ''}
+    }
+` : '';
+---
+
+<!doctype html>
+<html lang="es">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="description" content={description} />
+		<meta name="viewport" content="width=device-width" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <!-- Google Fonts -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@400;500;700;800&display=swap" rel="stylesheet">
+		<meta name="generator" content={Astro.generator} />
+        {image && <meta property="og:image" content={image} />}
+		<title>{title}</title>
+        {theme && <style set:html={themeStyles}></style>}
+	</head>
+	<body class="min-h-screen relative overflow-x-hidden selection:bg-[var(--color-primary)] selection:text-white">
+        <!-- Background Mesh -->
+        <div class="fixed inset-0 z-[-1] overflow-hidden pointer-events-none">
+            <div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-[var(--color-primary)] opacity-20 blur-[100px] animate-float"></div>
+            <div class="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-[var(--color-secondary)] opacity-20 blur-[100px] animate-float delay-1000"></div>
+        </div>
+
+        <main class="w-full max-w-md mx-auto min-h-screen relative z-10 glass-panel border-x border-[var(--glass-border)] md:my-8 md:rounded-[2rem] md:min-h-[calc(100vh-4rem)] bg-opacity-50">
+		    <slot />
+        </main>
+	</body>
+</html>

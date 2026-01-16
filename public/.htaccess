@@ -4,7 +4,32 @@
     </IfModule>
 
     RewriteEngine On
-
+    
+    # ----------------------------------------------------------------------
+    # SUBDOMAIN ROUTING FOR TENANTS
+    # ----------------------------------------------------------------------
+    # If the host is NOT www.domain.com AND NOT domain.com or localhost
+    RewriteCond %{HTTP_HOST} !^www\. [NC]
+    RewriteCond %{HTTP_HOST} !^ecard-modern\.test$ [NC]
+    RewriteCond %{HTTP_HOST} !^localhost$ [NC]
+    
+    # Extract the subdomain (assumes subdomain.domain.com)
+    RewriteCond %{HTTP_HOST} ^([^\.]+)\. [NC]
+    
+    # Check if the static site folder exists for this subdomain
+    RewriteCond %{DOCUMENT_ROOT}/sites/%1/index.html -f
+    
+    # Serve the static file
+    RewriteRule ^/?$ /sites/%1/index.html [L]
+    
+    # If requesting a specific file/asset for the tenant
+    RewriteCond %{HTTP_HOST} ^([^\.]+)\. [NC]
+    RewriteCond %{DOCUMENT_ROOT}/sites/%1%{REQUEST_URI} -f
+    RewriteRule ^(.*)$ /sites/%1/$1 [L]
+    
+    # ----------------------------------------------------------------------
+    # LARAVEL DEFAULT ROUTING
+    # ----------------------------------------------------------------------
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
