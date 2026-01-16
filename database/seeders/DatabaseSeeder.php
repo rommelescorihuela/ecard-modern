@@ -57,21 +57,12 @@ class DatabaseSeeder extends Seeder
             'is_premium' => true,
         ]);
 
-        // Crear usuario administrador
+        // Crear usuario super administrador
         $admin = User::factory()->create([
-            'name' => 'Admin User',
+            'name' => 'Super Admin',
             'email' => 'admin@example.com',
             'password' => Hash::make('password'),
         ]);
         $admin->assignRole('Administrador');
-
-        // Crear usuario normal
-        $user = User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'user@example.com',
-            'password' => Hash::make('password'),
-            'plan_id' => 1, // Básico
-        ]);
-        $user->assignRole('Usuario');
     }
 }
