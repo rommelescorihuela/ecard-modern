@@ -28,6 +28,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Appointment extends Model
 {
+	use \App\Traits\BelongsToVcard;
+
 	protected $table = 'appointments';
 
 	protected $casts = [

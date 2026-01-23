@@ -12,6 +12,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Spatie\Permission\Traits\HasRoles;
 
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Models\Contracts\HasTenants;
+use Filament\Panel;
+use App\Traits\BelongsToVcard;
+use Illuminate\Database\Eloquent\Model;
+
 /**
  * Class User
  *
@@ -30,9 +36,9 @@ use Spatie\Permission\Traits\HasRoles;
  *
  * @package App\Models
  */
-class User extends Authenticatable
+class User extends Authenticatable implements FilamentUser, HasTenants
 {
-	use HasFactory, HasRoles;
+	use HasFactory, HasRoles, BelongsToVcard, \App\Traits\ActivityLogger, \Laravel\Cashier\Billable;
 
 	protected $table = 'users';
 
@@ -52,7 +58,8 @@ class User extends Authenticatable
 		'email_verified_at',
 		'password',
 		'remember_token',
-		'plan_id'
+		'plan_id',
+		'vcard_id'
 	];
 
 	public function plan()
@@ -63,5 +70,28 @@ class User extends Authenticatable
 	public function vcards()
 	{
 		return $this->hasMany(Vcard::class);
+	}
+
+	public function canAccessPanel(Panel $panel): bool
+	{
+		if ($panel->getId() === 'admin') {
+			return $this->vcard_id === null;
+		}
+
+		if ($panel->getId() === 'app') {
+			return $this->vcard_id !== null;
+		}
+
+		return true;
+	}
+
+	public function getTenants(Panel $panel): Collection
+	{
+		return Collection::make($this->vcard ? [$this->vcard] : []);
+	}
+
+	public function canAccessTenant(Model $tenant): bool
+	{
+		return $this->vcard_id === $tenant->id;
 	}
 }

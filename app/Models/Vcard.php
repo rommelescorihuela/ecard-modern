@@ -10,8 +10,14 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 
+use Stancl\Tenancy\Database\Models\Tenant as BaseTenant;
+use Stancl\Tenancy\Database\Concerns\HasDomains;
+use Stancl\Tenancy\Contracts\Tenant;
+use Stancl\Tenancy\Database\Concerns\CentralConnection;
+
 /**
  * Class Vcard
+
  * 
  * @property int $id
  * @property int $user_id
@@ -31,14 +37,19 @@ use Illuminate\Database\Eloquent\Model;
  *
  * @package App\Models
  */
-class Vcard extends Model
+class Vcard extends Model implements Tenant
 {
+	use HasDomains, CentralConnection, \App\Traits\ActivityLogger;
+
 	protected $casts = [
 		'user_id' => 'int',
 		'is_active' => 'bool',
 		'template_id' => 'int',
 		'content' => 'json',
-		'last_built_at' => 'datetime'
+		'last_built_at' => 'datetime',
+		'onboarding_step' => 'integer',
+		'has_appointments' => 'boolean',
+		'has_contact_form' => 'boolean'
 	];
 
 	protected $fillable = [
@@ -48,7 +59,10 @@ class Vcard extends Model
 		'content',
 		'is_active',
 		'template_id',
-		'last_built_at'
+		'last_built_at',
+		'onboarding_step',
+		'has_appointments',
+		'has_contact_form'
 	];
 
 	public function user()
@@ -59,6 +73,11 @@ class Vcard extends Model
 	public function template()
 	{
 		return $this->belongsTo(Template::class);
+	}
+
+	public function domains()
+	{
+		return $this->hasMany(Domain::class, 'vcard_id');
 	}
 
 	public function vcard_analytics()
@@ -74,5 +93,42 @@ class Vcard extends Model
 	public function appointments()
 	{
 		return $this->hasMany(Appointment::class);
+	}
+
+	public function getTenantKeyName(): string
+	{
+		return 'id';
+	}
+
+	public function getTenantKey()
+	{
+		return $this->getAttribute($this->getTenantKeyName());
+	}
+
+	public function run(callable $callback)
+	{
+		// For single DB, we just set the tenant in context
+		// But Stancl expects this method.
+		// In Single DB, run is less relevant than scoping, but required by interface
+		$originalTenant = tenant();
+		tenancy()->initialize($this);
+		$result = $callback($this);
+		if ($originalTenant) {
+			tenancy()->initialize($originalTenant);
+		} else {
+			tenancy()->end();
+		}
+		return $result;
+	}
+
+	public function getInternal(string $key)
+	{
+		return $this->getAttribute($key);
+	}
+
+	public function setInternal(string $key, $value)
+	{
+		$this->setAttribute($key, $value);
+		return $this;
 	}
 }
